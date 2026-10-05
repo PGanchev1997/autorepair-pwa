@@ -106,14 +106,24 @@ const VERIFIED_PROFILES = {
     power: "77 kW / 105 PS @ 4,400 rpm",
     torque: "250 Nm @ 1,500–2,500 rpm",
     injection: "Дизел, директно впръскване, common-rail",
-    turbo: "Турбокомпресор",
+    turbo: "Турбокомпресор с интеркулер",
+    engineFamily: "VW EA189",
+    cylinders: "4 цилиндъра, редови",
+    valves: "16 клапана (4 на цилиндър)",
+    boreStroke: "79.5 × 80.5 mm",
+    compression: "16.5:1",
+    fuel: "Дизел по EN 590",
+    emissions: "Euro 5",
+    dpf: "Да",
+    egr: "Да",
+    timing: "Зъбен ремък",
     oilSpec: "VW 507 00",
     oilViscosity: "5W-30 (с одобрение VW 507 00)",
     oilCapacity: "≈ 4.3 l при смяна с маслен филтър",
     serviceInterval: "15,000 km / 12 месеца*",
-    fuelTank: "50 l",
-    sourceNote: "Мощност/въртящ момент/обем/резервоар: Volkswagen. Масло и количество: сервизна документация за 1.6 TDI CAYC. Интервалът е ориентир за фиксиран сервиз и трябва да се потвърди според пазара/сервизния режим.",
-    confidence: "Проверено"
+    fuelTank: "≈ 50 l (предно предаване)",
+    sourceNote: "Профилът обединява данни от Volkswagen Newsroom, технически данни за 1.6 TDI common-rail и сервизни/каталожни източници. Интервалът 15 000 km/12 месеца е ориентир за фиксиран сервиз и трябва да се потвърди по конкретния сервизен режим/VIN.",
+    confidence: "Проверено с уточнение"
   },
   "Volkswagen|Golf VI|CAYB": {
     displacement: "1,598 cm³",
@@ -146,7 +156,16 @@ const SPEC_TEMPLATES = {
     ["Работен обем", v => profileFor(v)?.displacement || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
     ["Мощност", v => profileFor(v)?.power || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
     ["Въртящ момент", v => profileFor(v)?.torque || "Изисква проверен източник", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"],
-    ["Впръскване", v => profileFor(v)?.injection || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"]
+    ["Впръскване", v => profileFor(v)?.injection || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Турбокомпресор", v => profileFor(v)?.turbo || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Семейство двигател", v => profileFor(v)?.engineFamily || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Цилиндри", v => profileFor(v)?.cylinders || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Клапани", v => profileFor(v)?.valves || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Степен на сгъстяване", v => profileFor(v)?.compression || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Гориво", v => profileFor(v)?.fuel || v.engine[3], v => profileFor(v) ? "Проверено" : "Каталог"],
+    ["DPF", v => profileFor(v)?.dpf || "Проверка", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["EGR", v => profileFor(v)?.egr || "Проверка", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Ангренаж", v => profileFor(v)?.timing || "Проверка", v => profileFor(v) ? "Проверено" : "Проверка"]
   ],
   service: [
     ["Моторно масло", v => profileFor(v)?.oilViscosity || "Изисква точна сервизна спецификация", v => profileFor(v) ? "Проверено" : "Проверка"],
@@ -156,7 +175,8 @@ const SPEC_TEMPLATES = {
     ["Въздушен филтър", () => "Каталог по VIN/двигател", "Проверка"],
     ["Горивен филтър", () => "Каталог по VIN/двигател", "Проверка"],
     ["Филтър купе", () => "Каталог по VIN/модел", "Проверка"],
-    ["Сервизен интервал", v => profileFor(v)?.serviceInterval || "Изисква проверен производителски източник", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"]
+    ["Сервизен интервал", v => profileFor(v)?.serviceInterval || "Изисква проверен производителски източник", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"],
+    ["Горивен резервоар", v => profileFor(v)?.fuelTank || "Проверка", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"]
   ],
   fluids: [
     ["Двигателно масло", v => profileFor(v)?.oilSpec || "Спецификацията зависи от двигателя", v => profileFor(v) ? "Проверено" : "Проверка"],
@@ -316,6 +336,6 @@ function runGlobalSearch(){
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
 
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=13").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=14").catch(()=>{}));
 }
 document.addEventListener("DOMContentLoaded", init);
