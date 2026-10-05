@@ -1,11 +1,13 @@
-AutoRepair PWA v19
+AutoRepair PWA v20
 
-VIN decoder v19:
-- validates 17-character VIN format
-- uses a European-oriented DB.VIN source as an additional source
-- uses NHTSA vPIC as secondary source
-- cross-checks fields when both sources return data
-- does not accept suspicious NHTSA years for European Ford as fact
-- does not allow a VIN vehicle into the local service catalog unless the engine code is confirmed in the local catalog
+VIN v20:
+- проверява VIN в DB.VIN, VinWhere и NHTSA vPIC паралелно;
+- използва timeout, за да не блокира iPhone;
+- нормализира различните JSON формати;
+- не приема подозрителна NHTSA година за европейски Ford;
+- показва кои източници са отговорили;
+- не превръща неподтърдени данни в сервизни спецификации;
+- не позволява VIN автомобил да се използва в локалния сервизен каталог без потвърден engine code;
+- VinWhere е публичен free API и изисква видима атрибуция при използване; затова AutoRepair показва линк към VinWhere при резултат.
 
-Important: production-grade exact VIN identification for European vehicles should ultimately use a licensed professional source such as TecAlliance/TecDoc or another contracted European VIN data provider. v19 is designed to fail safely instead of inventing specifications.
+Важно: v20 е тестова multi-source архитектура. За професионална VIN идентификация до конкретен TecDoc KType/NType и пълна европейска конфигурация е необходим лицензиран професионален provider като TecAlliance Vehicle Identification Service.
