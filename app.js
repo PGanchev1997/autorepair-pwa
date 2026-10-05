@@ -188,8 +188,18 @@ const OBD = [
 ];
 
 const el = id => document.getElementById(id);
-let vehicle = JSON.parse(localStorage.getItem("vehicle") || "null");
-let repairs = JSON.parse(localStorage.getItem("repairs") || "[]");
+function safeJSON(key, fallback){
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch(e) {
+    localStorage.removeItem(key);
+    return fallback;
+  }
+}
+let vehicle = safeJSON("vehicle", null);
+let repairs = safeJSON("repairs", []);
+if(!Array.isArray(repairs)) repairs = [];
 
 function show(id){
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
@@ -204,14 +214,18 @@ function show(id){
 
 function init(){
   const make = el("makeSelect");
+  if(!make) return;
   make.innerHTML = Object.keys(DB).map(x => `<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join("");
   make.addEventListener("change", renderModels);
-  el("modelSelect").addEventListener("change", renderModel);
-  el("saveVehicleBtn").addEventListener("click", saveVehicle);
-  el("obdSearch").addEventListener("input", renderOBD);
-  el("globalSearchInput").addEventListener("input", runGlobalSearch);
-  el("addRepairBtn").addEventListener("click", addRepair);
-  document.querySelectorAll("[data-show]").forEach(btn => btn.addEventListener("click", () => show(btn.dataset.show)));
+  el("modelSelect")?.addEventListener("change", renderModel);
+  el("saveVehicleBtn")?.addEventListener("click", saveVehicle);
+  el("obdSearch")?.addEventListener("input", renderOBD);
+  el("globalSearchInput")?.addEventListener("input", runGlobalSearch);
+  el("addRepairBtn")?.addEventListener("click", addRepair);
+  document.addEventListener("click", e => {
+    const btn = e.target.closest("[data-show]");
+    if(btn) { e.preventDefault(); show(btn.dataset.show); }
+  });
   document.querySelectorAll("[data-spec-tab]").forEach(btn => {
     btn.addEventListener("click", () => renderSpecs(btn.dataset.specTab));
     btn.addEventListener("keydown", e => {
@@ -301,6 +315,6 @@ function runGlobalSearch(){
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
 
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=9").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=10").catch(()=>{}));
 }
 document.addEventListener("DOMContentLoaded", init);
