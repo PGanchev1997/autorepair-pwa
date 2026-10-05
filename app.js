@@ -171,12 +171,16 @@ const SPEC_TEMPLATES = {
     ["Моторно масло", v => profileFor(v)?.oilViscosity || "Изисква точна сервизна спецификация", v => profileFor(v) ? "Проверено" : "Проверка"],
     ["Спецификация на маслото", v => profileFor(v)?.oilSpec || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
     ["Количество масло", v => profileFor(v)?.oilCapacity || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
-    ["Маслен филтър", () => "Каталог по VIN/двигател", "Проверка"],
-    ["Въздушен филтър", () => "Каталог по VIN/двигател", "Проверка"],
-    ["Горивен филтър", () => "Каталог по VIN/двигател", "Проверка"],
-    ["Филтър купе", () => "Каталог по VIN/модел", "Проверка"],
-    ["Сервизен интервал", v => profileFor(v)?.serviceInterval || "Изисква проверен производителски източник", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"],
-    ["Горивен резервоар", v => profileFor(v)?.fuelTank || "Проверка", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"]
+    ["Маслен филтър", v => profileFor(v) ? "Сменя се при смяна на моторното масло" : "Каталог по VIN/двигател", v => profileFor(v) ? "Сервизна операция" : "Проверка"],
+    ["Въздушен филтър", v => profileFor(v) ? "Производител: 90 000 km или 6 години\\nУсловия: при силно запрашаване — по-рано\\nПрактика: проверка при всяко обслужване; смяна според състоянието" : "Каталог по VIN/двигател", v => profileFor(v) ? "Заводски интервал + условия" : "Проверка"],
+    ["Горивен филтър", v => profileFor(v) ? "Производител: 90 000 km при EN 590\\nУсловия: нискокачествено гориво — по-рано; извън EN 590 — 30 000 km\\nПрактика: при неизвестна история — смяна; проверка за вода/замърсяване" : "Каталог по VIN/двигател", v => profileFor(v) ? "Заводски интервал + условия" : "Проверка"],
+    ["Филтър купе", v => profileFor(v) ? "60 000 km / 24 месеца*" : "Каталог по VIN/модел", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"],
+    ["Спирачна течност", v => profileFor(v) ? "Първа смяна 36 месеца, след това на 24 месеца*" : "Провери по сервизния план", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"],
+    ["Ангренажен ремък", v => profileFor(v) ? "210 000 km*; при прашни условия интервалът може да е по-кратък" : "Провери по конкретния двигател/VIN", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"],
+    ["Периодичен сервиз", v => profileFor(v) ? "Фиксиран режим: 15 000 km / 12 месеца*" : "Изисква проверен производителски източник", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"],
+    ["Периодичен преглед", v => profileFor(v) ? "Първи на 60 000 km / 36 месеца; след това 60 000 km / 24 месеца*" : "Проверка", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"],
+    ["Горивен резервоар", v => profileFor(v)?.fuelTank || "Проверка", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"],
+    ["Бележка", v => profileFor(v) ? "* Интервалите зависят от сервизния режим, пазара, оборудването и условията на експлоатация; потвърди по VIN/сервизна документация." : "", v => profileFor(v) ? "Важно" : ""]
   ],
   fluids: [
     ["Двигателно масло", v => profileFor(v)?.oilSpec || "Спецификацията зависи от двигателя", v => profileFor(v) ? "Проверено" : "Проверка"],
@@ -218,6 +222,7 @@ function safeJSON(key, fallback){
   }
 }
 let vehicle = safeJSON("vehicle", null);
+let vinProfile = safeJSON("vinProfile", null);
 let repairs = safeJSON("repairs", []);
 if(!Array.isArray(repairs)) repairs = [];
 
@@ -239,6 +244,8 @@ function init(){
   make.addEventListener("change", renderModels);
   el("modelSelect")?.addEventListener("change", renderModel);
   el("saveVehicleBtn")?.addEventListener("click", saveVehicle);
+  el("decodeVinBtn")?.addEventListener("click", decodeVIN);
+  el("vinInput")?.addEventListener("input", e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, "").slice(0,17); });
   el("obdSearch")?.addEventListener("input", renderOBD);
   el("globalSearchInput")?.addEventListener("input", runGlobalSearch);
   el("addRepairBtn")?.addEventListener("click", addRepair);
@@ -276,6 +283,49 @@ function renderModel(){
   const brandCount = Object.keys(DB).length;
   el("catalogStatus").textContent = `Каталог: ${brandCount} марки • ${modelCount} модела • Избрано: ${make} → ${model}`;
 }
+function normalizeVin(v){ return String(v||"").trim().toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, "").slice(0,17); }
+function vinField(r, key){ return String(r?.[key] ?? "").trim(); }
+function renderVinResult(data){
+  const r=data;
+  const make=vinField(r,"Make"), model=vinField(r,"Model"), year=vinField(r,"ModelYear");
+  const engineModel=vinField(r,"EngineModel"), engineCode=vinField(r,"EngineCode");
+  const disp=vinField(r,"DisplacementL"), cyl=vinField(r,"EngineCylinders"), fuel=vinField(r,"FuelTypePrimary");
+  const trans=vinField(r,"TransmissionStyle"), drive=vinField(r,"DriveType"), body=vinField(r,"BodyClass");
+  const knownEngine = Object.values(DB[make]||{}).flatMap(m=>m.engines).find(e => engineCode && e[1]===engineCode) || null;
+  vinProfile={vin:vinField(r,"VIN")||el("vinInput").value, make,model,year,engineModel,engineCode,disp,cyl,fuel,trans,drive,body,source:"NHTSA vPIC"};
+  localStorage.setItem("vinProfile", JSON.stringify(vinProfile));
+  el("vinStatus").textContent = make||model ? "VIN е декодиран. Провери резултата преди да го използваш като сервизна спецификация." : "VIN е приет, но няма достатъчно декодирани данни.";
+  el("vinResult").innerHTML=`<div class="item"><b>${escapeHtml(make||"Неизвестна марка")} ${escapeHtml(model||"")}</b><span>${escapeHtml(year||"Година: не е върната")}</span><span>${escapeHtml(engineModel||"Двигател: не е върнат")}${engineCode?" • "+escapeHtml(engineCode):""}</span>${knownEngine?`<small class="verified">Кодът на двигателя съвпада с локален каталог: ${escapeHtml(knownEngine[1])}</small>`:`<small class="pending">Кодът на двигателя не е потвърден в локалния каталог.</small>`}</div><div class="specGrid"><div class="specCard"><b>Работен обем</b><div class="value">${escapeHtml(disp?disp+" L":"Не е върнат")}</div><small class="pending">VIN decoder</small></div><div class="specCard"><b>Цилиндри</b><div class="value">${escapeHtml(cyl||"Не е върнат")}</div><small class="pending">VIN decoder</small></div><div class="specCard"><b>Гориво</b><div class="value">${escapeHtml(fuel||"Не е върнат")}</div><small class="pending">VIN decoder</small></div><div class="specCard"><b>Скоростна кутия</b><div class="value">${escapeHtml(trans||"Не е върната")}</div><small class="pending">VIN decoder</small></div><div class="specCard"><b>Задвижване</b><div class="value">${escapeHtml(drive||"Не е върнато")}</div><small class="pending">VIN decoder</small></div><div class="specCard"><b>Купе</b><div class="value">${escapeHtml(body||"Не е върнато")}</div><small class="pending">VIN decoder</small></div></div><aside><b>Важно:</b> VIN декодирането е идентификационен слой. То не потвърждава автоматично сервизни количества, моменти на затягане, филтри или други критични спецификации.</aside>${knownEngine?`<button type="button" onclick="useVinVehicle()" style="margin-top:10px">Използвай този автомобил</button>`:""}`;
+}
+async function decodeVIN(){
+  const vin=normalizeVin(el("vinInput")?.value);
+  if(vin.length!==17){ el("vinStatus").textContent="VIN трябва да съдържа точно 17 символа (без I, O и Q)."; el("vinResult").innerHTML=""; return; }
+  el("vinInput").value=vin; el("vinStatus").textContent="Декодиране..."; el("vinResult").innerHTML="";
+  try{
+    const url=`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${encodeURIComponent(vin)}?format=json`;
+    const res=await fetch(url,{headers:{"Accept":"application/json"}});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json=await res.json();
+    const r=Array.isArray(json.Results)?json.Results[0]:null;
+    if(!r) throw new Error("VIN decoder не върна резултат.");
+    const err=vinField(r,"ErrorText");
+    if(err && !r.Make && !r.Model) throw new Error(err);
+    renderVinResult(r);
+  }catch(e){
+    el("vinStatus").textContent="Неуспешно декодиране: "+(e.message||"неизвестна грешка");
+    el("vinResult").innerHTML='<aside>Провери интернет връзката и VIN-а. За европейски автомобили е възможно decoder-ът да върне непълни данни.</aside>';
+  }
+}
+function useVinVehicle(){
+  if(!vinProfile) return;
+  const dbModel=DB[vinProfile.make]?.[vinProfile.model];
+  const knownEngine=dbModel?.engines?.find(e=>vinProfile.engineCode && e[1]===vinProfile.engineCode);
+  if(!knownEngine){ el("vinStatus").textContent="VIN е запазен, но локалният каталог няма потвърден двигател за тази конфигурация."; return; }
+  vehicle={make:vinProfile.make,model:vinProfile.model,year:vinProfile.year||"—",engine:knownEngine,vin:vinProfile.vin,vinSource:"NHTSA vPIC"};
+  localStorage.setItem("vehicle",JSON.stringify(vehicle));
+  updateHome(); show("home");
+}
+
 function saveVehicle(){
   const make = el("makeSelect").value, model = el("modelSelect").value;
   const data = DB[make][model], engine = data.engines[Number(el("engineSelect").value)];
@@ -285,7 +335,7 @@ function saveVehicle(){
 }
 function updateHome(){
   el("selectedCar").textContent = vehicle ? `${vehicle.make} ${vehicle.model} • ${vehicle.year}` : "Не е избран";
-  el("selectedEngine").textContent = vehicle ? `${vehicle.engine[0]} • ${vehicle.engine[1]} • ${vehicle.engine[3]}` : "Избери автомобил, за да започнеш.";
+  el("selectedEngine").textContent = vehicle ? `${vehicle.engine[0]} • ${vehicle.engine[1]} • ${vehicle.engine[3]}${vehicle.vin ? " • VIN: "+vehicle.vin : ""}` : "Избери автомобил, за да започнеш.";
 }
 function renderSpecs(tab="overview"){
   const tabs = document.querySelectorAll("[data-spec-tab]");
@@ -298,7 +348,8 @@ function renderSpecs(tab="overview"){
   const p = profileFor(vehicle);
   el("vehicleSummary").innerHTML=`<div class="item"><b>${escapeHtml(vehicle.make)} ${escapeHtml(vehicle.model)}</b><span class="muted">${escapeHtml(vehicle.year)} • ${escapeHtml(vehicle.engine[0])} • ${escapeHtml(vehicle.engine[1])} • ${escapeHtml(vehicle.engine[3])}</span>${p ? `<small class="verified">${escapeHtml(p.confidence)} • профилът е за ${escapeHtml(vehicle.engine[1])}</small>` : ""}</div>`;
   const rows = SPEC_TEMPLATES[tab] || SPEC_TEMPLATES.overview;
-  el("specList").innerHTML=`<div class="specGrid">${rows.map(([label,get,status])=>{
+  const serviceNote = tab === "service" && p ? '<aside class="serviceNote"><b>Как да четем интервала:</b> „Производител“ е заводският интервал; „Условия“ описва кога той трябва да се съкрати; „Практика“ е сервизна препоръка и не заменя официалния сервизен план.</aside>' : "";
+  el("specList").innerHTML=`${serviceNote}<div class="specGrid">${rows.map(([label,get,status])=>{
     const value = get(vehicle);
     const statusValue = typeof status === "function" ? status(vehicle) : status;
     const cls = statusValue === "Каталог" || statusValue === "Общо" || statusValue === "Проверено" || statusValue === "Проверено с уточнение" ? "verified" : "pending";
@@ -336,6 +387,6 @@ function runGlobalSearch(){
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
 
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=14").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=18").catch(()=>{}));
 }
 document.addEventListener("DOMContentLoaded", init);

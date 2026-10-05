@@ -16,12 +16,16 @@
 <div class="grid">
 <button type="button" onclick="show('specs')">🔧<br>Технически данни</button><button type="button" onclick="show('diagnostics')">🔍<br>OBD диагностика</button><button type="button" onclick="show('repairs')">🛠️<br>Ремонти</button><button type="button" onclick="show('search')">⌕<br>Търсене</button>
 </div></section>
-<section id="cars" class="screen"><h2>Автомобил</h2><p class="muted">Разширен каталог • 15 марки</p>
+<section id="cars" class="screen"><h2>Автомобил</h2>
+<div class="item"><b>VIN номер</b><span class="muted">Въведи 17-символния VIN за автоматично декодиране.</span><input id="vinInput" maxlength="17" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Напр. WVWZZZ1KZ..." style="text-transform:uppercase"><button id="decodeVinBtn" type="button" style="margin-top:10px">🔍 Декодирай VIN</button><div id="vinStatus" class="status"></div></div>
+<div id="vinResult"></div>
+<hr style="border:0;border-top:1px solid #ddd;margin:22px 0">
+<p class="muted">Или избери автомобила ръчно</p><p class="muted">Разширен каталог • 15 марки</p>
 <label>Марка<select id="makeSelect"></select></label>
 <label>Модел<select id="modelSelect"></select></label>
 <label>Година<select id="yearSelect"></select></label>
 <label>Двигател<select id="engineSelect"></select></label>
-<button id="saveVehicleBtn">Запази</button><div id="catalogStatus" class="status"></div>
+<button id="saveVehicleBtn" type="button">Запази</button><div id="catalogStatus" class="status"></div>
 </section>
 <section id="specs" class="screen">
 <h2>Технически данни</h2>
@@ -48,5 +52,5 @@
 window.addEventListener('error',function(e){var b=document.getElementById('jsError'),t=document.getElementById('jsErrorText');if(b&&t){b.style.display='block';t.textContent=(e.message||'Неизвестна грешка')+'\n'+(e.filename||'')+':'+(e.lineno||'');}});
 window.addEventListener('unhandledrejection',function(e){var b=document.getElementById('jsError'),t=document.getElementById('jsErrorText');if(b&&t){b.style.display='block';t.textContent='Promise error: '+String(e.reason);}});
 </script>
-<script src="app.js?v=12"></script>
+<script src="app.js?v=18"></script>
 </body></html>
