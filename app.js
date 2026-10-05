@@ -1,16 +1,95 @@
+const yr = (a,b) => Array.from({length:b-a+1}, (_,i)=>a+i);
+const E = (name, code="—", type="—") => [name, code, "—", type];
+
 const DB = {
   "BMW": {
-    "3 Series E90": { years:[2005,2006,2007,2008,2009,2010,2011,2012], engines:[["2.0 Diesel","N47D20","177 к.с.","Дизел"],["2.0 Petrol","N43B20","170 к.с.","Бензин"]] },
-    "5 Series E60": { years:[2004,2005,2006,2007,2008,2009,2010], engines:[["2.0 Diesel","N47D20","—","Дизел"],["3.0 Diesel","—","—","Дизел"]] }
+    "1 Series F20": {years:yr(2011,2019), engines:[E("116i"),E("118d","N47D20","Дизел"),E("120d","B47D20","Дизел")]},
+    "3 Series E90": {years:yr(2005,2012), engines:[E("2.0 Diesel","N47D20","Дизел"),E("2.0 Petrol","N43B20","Бензин")]},
+    "3 Series F30": {years:yr(2012,2019), engines:[E("320d","N47D20/B47D20","Дизел"),E("320i","N20B20","Бензин")]},
+    "5 Series E60": {years:yr(2004,2010), engines:[E("2.0 Diesel","—","Дизел"),E("3.0 Diesel","—","Дизел")]},
+    "5 Series F10": {years:yr(2010,2017), engines:[E("520d","N47D20/B47D20","Дизел"),E("530d","N57D30","Дизел")]},
+    "X3 F25": {years:yr(2010,2017), engines:[E("xDrive20d","N47D20","Дизел"),E("xDrive20i","N20B20","Бензин")]}
   },
   "Mercedes-Benz": {
-    "C-Class W204": { years:[2007,2008,2009,2010,2011,2012,2013,2014], engines:[["C220 CDI","—","—","Дизел"],["C200","—","—","Бензин"]] }
+    "A-Class W176": {years:yr(2012,2018), engines:[E("A180"),E("A200"),E("A200 CDI","—","Дизел")]},
+    "C-Class W204": {years:yr(2007,2014), engines:[E("C220 CDI","—","Дизел"),E("C200","—","Бензин")]},
+    "C-Class W205": {years:yr(2014,2021), engines:[E("C200"),E("C220d","—","Дизел")]},
+    "E-Class W212": {years:yr(2009,2016), engines:[E("E220 CDI","—","Дизел"),E("E250","—","Бензин")]},
+    "GLC X253": {years:yr(2015,2022), engines:[E("GLC 220d","—","Дизел"),E("GLC 300","—","Бензин")]}
   },
   "Audi": {
-    "A4 B8": { years:[2008,2009,2010,2011,2012,2013,2014,2015], engines:[["2.0 TDI","—","—","Дизел"],["1.8 TFSI","—","—","Бензин"]] }
+    "A3 8V": {years:yr(2012,2020), engines:[E("1.6 TDI","—","Дизел"),E("2.0 TDI","—","Дизел"),E("1.4 TFSI","—","Бензин")]},
+    "A4 B8": {years:yr(2008,2015), engines:[E("2.0 TDI","—","Дизел"),E("1.8 TFSI","—","Бензин")]},
+    "A4 B9": {years:yr(2015,2024), engines:[E("2.0 TDI","—","Дизел"),E("2.0 TFSI","—","Бензин")]},
+    "A6 C7": {years:yr(2011,2018), engines:[E("2.0 TDI","—","Дизел"),E("3.0 TDI","—","Дизел")]},
+    "Q5 8R": {years:yr(2008,2017), engines:[E("2.0 TDI","—","Дизел"),E("2.0 TFSI","—","Бензин")]}
   },
   "Volkswagen": {
-    "Golf VI": { years:[2008,2009,2010,2011,2012], engines:[["1.6 TDI","—","—","Дизел"],["2.0 TDI","—","—","Дизел"],["1.4 TSI","—","—","Бензин"]] }
+    "Golf VI": {years:yr(2008,2012), engines:[E("1.6 TDI","—","Дизел"),E("2.0 TDI","—","Дизел"),E("1.4 TSI","—","Бензин")]},
+    "Golf VII": {years:yr(2012,2019), engines:[E("1.6 TDI","—","Дизел"),E("2.0 TDI","—","Дизел"),E("1.4 TSI","—","Бензин")]},
+    "Passat B7": {years:yr(2010,2014), engines:[E("2.0 TDI","—","Дизел"),E("1.4 TSI","—","Бензин")]},
+    "Passat B8": {years:yr(2014,2023), engines:[E("2.0 TDI","—","Дизел"),E("1.5 TSI","—","Бензин")]},
+    "Tiguan II": {years:yr(2016,2024), engines:[E("2.0 TDI","—","Дизел"),E("1.5 TSI","—","Бензин")]}
+  },
+  "Toyota": {
+    "Corolla E150": {years:yr(2006,2013), engines:[E("1.4 D-4D","—","Дизел"),E("1.6 VVT-i","—","Бензин")]},
+    "Corolla E210": {years:yr(2018,2024), engines:[E("1.8 Hybrid","—","Хибрид"),E("2.0 Hybrid","—","Хибрид")]},
+    "Auris E180": {years:yr(2012,2018), engines:[E("1.4 D-4D","—","Дизел"),E("1.8 Hybrid","—","Хибрид")]},
+    "RAV4 XA40": {years:yr(2013,2018), engines:[E("2.0 D-4D","—","Дизел"),E("2.0 Valvematic","—","Бензин")]}
+  },
+  "Ford": {
+    "Focus Mk3": {years:yr(2011,2018), engines:[E("1.6 TDCi","—","Дизел"),E("1.0 EcoBoost","—","Бензин")]},
+    "Focus Mk4": {years:yr(2018,2024), engines:[E("1.5 EcoBlue","—","Дизел"),E("1.0 EcoBoost","—","Бензин")]},
+    "Mondeo Mk5": {years:yr(2014,2022), engines:[E("2.0 TDCi","—","Дизел"),E("1.5 EcoBoost","—","Бензин")]},
+    "Kuga Mk2": {years:yr(2013,2020), engines:[E("2.0 TDCi","—","Дизел"),E("1.5 EcoBoost","—","Бензин")]}
+  },
+  "Opel": {
+    "Astra J": {years:yr(2009,2015), engines:[E("1.7 CDTI","—","Дизел"),E("1.4 Turbo","—","Бензин")]},
+    "Astra K": {years:yr(2015,2021), engines:[E("1.6 CDTI","—","Дизел"),E("1.4 Turbo","—","Бензин")]},
+    "Insignia A": {years:yr(2008,2017), engines:[E("2.0 CDTI","—","Дизел"),E("1.6 Turbo","—","Бензин")]},
+    "Corsa E": {years:yr(2014,2019), engines:[E("1.3 CDTI","—","Дизел"),E("1.4","—","Бензин")]}
+  },
+  "Skoda": {
+    "Octavia II": {years:yr(2004,2013), engines:[E("1.9 TDI","—","Дизел"),E("2.0 TDI","—","Дизел"),E("1.6 MPI","—","Бензин")]},
+    "Octavia III": {years:yr(2013,2020), engines:[E("1.6 TDI","—","Дизел"),E("2.0 TDI","—","Дизел"),E("1.4 TSI","—","Бензин")]},
+    "Superb II": {years:yr(2008,2015), engines:[E("2.0 TDI","—","Дизел"),E("1.8 TSI","—","Бензин")]},
+    "Kodiaq": {years:yr(2016,2024), engines:[E("2.0 TDI","—","Дизел"),E("1.5 TSI","—","Бензин")]}
+  },
+  "Renault": {
+    "Clio IV": {years:yr(2012,2019), engines:[E("1.5 dCi","—","Дизел"),E("0.9 TCe","—","Бензин")]},
+    "Megane III": {years:yr(2008,2016), engines:[E("1.5 dCi","—","Дизел"),E("1.2 TCe","—","Бензин")]},
+    "Megane IV": {years:yr(2016,2024), engines:[E("1.5 dCi","—","Дизел"),E("1.3 TCe","—","Бензин")]},
+    "Kadjar": {years:yr(2015,2022), engines:[E("1.5 dCi","—","Дизел"),E("1.2 TCe","—","Бензин")]}
+  },
+  "Peugeot": {
+    "308 T7": {years:yr(2007,2013), engines:[E("1.6 HDi","—","Дизел"),E("1.6 VTi","—","Бензин")]},
+    "308 T9": {years:yr(2013,2021), engines:[E("1.6 BlueHDi","—","Дизел"),E("1.2 PureTech","—","Бензин")]},
+    "508 I": {years:yr(2010,2018), engines:[E("2.0 HDi","—","Дизел"),E("1.6 THP","—","Бензин")]}
+  },
+  "Volvo": {
+    "V40": {years:yr(2012,2019), engines:[E("D2","—","Дизел"),E("T3","—","Бензин")]},
+    "S60 II": {years:yr(2010,2018), engines:[E("D3","—","Дизел"),E("T5","—","Бензин")]},
+    "XC60 I": {years:yr(2008,2017), engines:[E("D4","—","Дизел"),E("T5","—","Бензин")]}
+  },
+  "Honda": {
+    "Civic VIII": {years:yr(2005,2011), engines:[E("2.2 i-CTDi","—","Дизел"),E("1.8 i-VTEC","—","Бензин")]},
+    "Civic IX": {years:yr(2011,2017), engines:[E("1.6 i-DTEC","—","Дизел"),E("1.8 i-VTEC","—","Бензин")]},
+    "CR-V IV": {years:yr(2012,2018), engines:[E("1.6 i-DTEC","—","Дизел"),E("2.0 i-VTEC","—","Бензин")]}
+  },
+  "Nissan": {
+    "Qashqai J10": {years:yr(2007,2013), engines:[E("1.5 dCi","—","Дизел"),E("1.6","—","Бензин")]},
+    "Qashqai J11": {years:yr(2013,2021), engines:[E("1.5 dCi","—","Дизел"),E("1.2 DIG-T","—","Бензин")]},
+    "X-Trail T32": {years:yr(2013,2022), engines:[E("1.6 dCi","—","Дизел"),E("1.6 DIG-T","—","Бензин")]}
+  },
+  "Hyundai": {
+    "i30 GD": {years:yr(2011,2017), engines:[E("1.6 CRDi","—","Дизел"),E("1.4 MPI","—","Бензин")]},
+    "i30 PD": {years:yr(2016,2024), engines:[E("1.6 CRDi","—","Дизел"),E("1.4 T-GDi","—","Бензин")]},
+    "Tucson TL": {years:yr(2015,2020), engines:[E("1.7 CRDi","—","Дизел"),E("1.6 T-GDi","—","Бензин")]}
+  },
+  "Kia": {
+    "Ceed JD": {years:yr(2012,2018), engines:[E("1.6 CRDi","—","Дизел"),E("1.4 MPI","—","Бензин")]},
+    "Ceed CD": {years:yr(2018,2024), engines:[E("1.6 CRDi","—","Дизел"),E("1.4 T-GDi","—","Бензин")]},
+    "Sportage QL": {years:yr(2015,2021), engines:[E("1.7 CRDi","—","Дизел"),E("1.6 GDi","—","Бензин")]}
   }
 };
 
@@ -65,7 +144,9 @@ function renderModel(){
   if(!data) return;
   el("yearSelect").innerHTML = data.years.map(y => `<option value="${y}">${y}</option>`).join("");
   el("engineSelect").innerHTML = data.engines.map((e,i) => `<option value="${i}">${escapeHtml(e[0])} • ${escapeHtml(e[1])} • ${escapeHtml(e[3])}</option>`).join("");
-  el("catalogStatus").textContent = `Заредени: ${make} → ${model}`;
+  const modelCount = Object.values(DB).reduce((n, models) => n + Object.keys(models).length, 0);
+  const brandCount = Object.keys(DB).length;
+  el("catalogStatus").textContent = `Каталог: ${brandCount} марки • ${modelCount} модела • Избрано: ${make} → ${model}`;
 }
 function saveVehicle(){
   const make = el("makeSelect").value, model = el("modelSelect").value;
@@ -107,11 +188,12 @@ function runGlobalSearch(){
   let results=[];
   Object.entries(DB).forEach(([brand,models])=>Object.entries(models).forEach(([model,data])=>data.engines.forEach(e=>results.push(`${brand} ${model} ${e.join(" ")}`))));
   results = [...results, ...OBD.map(x=>x.join(" "))].filter(x=>!q || x.toLowerCase().includes(q));
-  el("searchResults").innerHTML = results.map(x=>`<div class="item">${escapeHtml(x)}</div>`).join("");
+  results.sort((a,b)=>a.localeCompare(b,"bg"));
+  el("searchResults").innerHTML = results.length ? results.map(x=>`<div class="item">${escapeHtml(x)}</div>`).join("") : '<div class="item muted">Няма намерени резултати.</div>';
 }
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
 
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=4").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=5").catch(()=>{}));
 }
 document.addEventListener("DOMContentLoaded", init);
