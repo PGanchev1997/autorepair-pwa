@@ -285,43 +285,139 @@ function renderModel(){
 }
 function normalizeVin(v){ return String(v||"").trim().toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, "").slice(0,17); }
 function vinField(r, key){ return String(r?.[key] ?? "").trim(); }
-function renderVinResult(data){
-  const r=data;
-  const make=vinField(r,"Make"), model=vinField(r,"Model"), year=vinField(r,"ModelYear");
-  const engineModel=vinField(r,"EngineModel"), engineCode=vinField(r,"EngineCode");
-  const disp=vinField(r,"DisplacementL"), cyl=vinField(r,"EngineCylinders"), fuel=vinField(r,"FuelTypePrimary");
-  const trans=vinField(r,"TransmissionStyle"), drive=vinField(r,"DriveType"), body=vinField(r,"BodyClass");
-  const knownEngine = Object.values(DB[make]||{}).flatMap(m=>m.engines).find(e => engineCode && e[1]===engineCode) || null;
-  vinProfile={vin:vinField(r,"VIN")||el("vinInput").value, make,model,year,engineModel,engineCode,disp,cyl,fuel,trans,drive,body,source:"NHTSA vPIC"};
+function firstNonEmpty(...vals){ return vals.map(v=>String(v??"").trim()).find(Boolean) || ""; }
+function fordVinInfo(vin){
+  const v=normalizeVin(vin);
+  if(v.length!==17) return {isFord:false};
+  const wmi=v.slice(0,3);
+  return {
+    isFord:wmi === "WFO" || wmi === "NM0",
+    wmi,
+    region:wmi === "WFO" ? "Ford of Europe" : (wmi === "NM0" ? "Ford Otosan / Europe" : "")
+  };
+}
+function cleanYear(value, vin, source){
+  const y=parseInt(String(value||""),10);
+  if(!y || y<1981 || y>2035) return "";
+  const fi=fordVinInfo(vin);
+  // vPIC sometimes returns misleading model years for European Ford VINs.
+  // Never present a suspicious Ford year as fact.
+  if(fi.isFord && source === "NHTSA vPIC" && (y===1999 || y===2000 || y===2001)) return "";
+  return String(y);
+}
+function normalizeProviderResult(raw, source, vin){
+  if(!raw) return null;
+  const r=raw;
+  const make=firstNonEmpty(r.Make,r.make,r.brand,r.Manufacturer);
+  const model=firstNonEmpty(r.Model,r.model);
+  const year=cleanYear(firstNonEmpty(r.ModelYear,r.year,r.modelYear),vin,source);
+  const engineModel=firstNonEmpty(r.EngineModel,r.engineModel,r.engine,r.Engine);
+  const engineCode=firstNonEmpty(r.EngineCode,r.engineCode,r.EngineCodePrimary);
+  const disp=firstNonEmpty(r.DisplacementL,r.displacementL,r.displacement,r.engineDisplacement);
+  const cyl=firstNonEmpty(r.EngineCylinders,r.engineCylinders,r.cylinders);
+  const fuel=firstNonEmpty(r.FuelTypePrimary,r.fuelType,r.fuel);
+  const trans=firstNonEmpty(r.TransmissionStyle,r.transmission,r.gearbox);
+  const drive=firstNonEmpty(r.DriveType,r.drive,r.drivetrain);
+  const body=firstNonEmpty(r.BodyClass,r.bodyType,r.body);
+  const manufacturer=firstNonEmpty(r.Manufacturer,r.manufacturer);
+  const modelDetail=firstNonEmpty(r.Version,r.version,r.trim,r.variant);
+  return {vin,make,model,year,engineModel,engineCode,disp,cyl,fuel,trans,drive,body,manufacturer,modelDetail,source};
+}
+function mergeVinResults(results){
+  const valid=results.filter(Boolean);
+  if(!valid.length) return null;
+  const out={...valid[0]};
+  const fields=["make","model","year","engineModel","engineCode","disp","cyl","fuel","trans","drive","body","manufacturer","modelDetail"];
+  for(const f of fields){
+    if(!out[f]){
+      const hit=valid.find(x=>x[f]);
+      if(hit) out[f]=hit[f];
+    }
+  }
+  const sources=[...new Set(valid.map(x=>x.source).filter(Boolean))];
+  out.sources=sources;
+  out.agreement={};
+  for(const f of ["make","model","year","engineCode","disp","fuel","trans","drive"]){
+    const vals=[...new Set(valid.map(x=>String(x[f]||"").toLowerCase()).filter(Boolean))];
+    out.agreement[f]=vals.length===1 && vals.length>0;
+  }
+  return out;
+}
+function exactnessLabel(v){
+  const hasIdentity=!!(v?.make && v?.model);
+  const hasBuild=!!(v?.engineModel || v?.engineCode || v?.disp || v?.trans || v?.drive);
+  const sourceCount=(v?.sources||[]).length;
+  const agreement=["make","model","year","engineCode","disp","trans","drive"].filter(k=>v?.agreement?.[k]).length;
+  if(hasIdentity && hasBuild && sourceCount>=2 && agreement>=3) return {label:"Висока увереност",cls:"verified",note:"Данните са съгласувани между повече от един VIN източник."};
+  if(hasIdentity && hasBuild) return {label:"Идентифициран",cls:"verified",note:"Има технически данни, но не всички полета са потвърдени от независим източник."};
+  if(hasIdentity) return {label:"Частично идентифициран",cls:"pending",note:"Липсват достатъчно технически данни за безопасна сервизна идентификация."};
+  return {label:"Няма достатъчно данни",cls:"pending",note:"VIN-ът е валиден по формат, но автомобилът не е идентифициран надеждно."};
+}
+function renderVinResult(v){
+  if(!v){ el("vinStatus").textContent="VIN не може да бъде идентифициран надеждно."; el("vinResult").innerHTML='<aside>Няма достатъчно данни от достъпните VIN източници. Не използвай резултата за сервизни спецификации.</aside>'; return; }
+  const knownEngine = Object.values(DB[v.make]||{}).flatMap(m=>m.engines).find(e => v.engineCode && e[1]===v.engineCode) || null;
+  vinProfile={...v};
   localStorage.setItem("vinProfile", JSON.stringify(vinProfile));
-  el("vinStatus").textContent = make||model ? "VIN е декодиран. Провери резултата преди да го използваш като сервизна спецификация." : "VIN е приет, но няма достатъчно декодирани данни.";
-  el("vinResult").innerHTML=`<div class="item"><b>${escapeHtml(make||"Неизвестна марка")} ${escapeHtml(model||"")}</b><span>${escapeHtml(year||"Година: не е върната")}</span><span>${escapeHtml(engineModel||"Двигател: не е върнат")}${engineCode?" • "+escapeHtml(engineCode):""}</span>${knownEngine?`<small class="verified">Кодът на двигателя съвпада с локален каталог: ${escapeHtml(knownEngine[1])}</small>`:`<small class="pending">Кодът на двигателя не е потвърден в локалния каталог.</small>`}</div><div class="specGrid"><div class="specCard"><b>Работен обем</b><div class="value">${escapeHtml(disp?disp+" L":"Не е върнат")}</div><small class="pending">VIN decoder</small></div><div class="specCard"><b>Цилиндри</b><div class="value">${escapeHtml(cyl||"Не е върнат")}</div><small class="pending">VIN decoder</small></div><div class="specCard"><b>Гориво</b><div class="value">${escapeHtml(fuel||"Не е върнат")}</div><small class="pending">VIN decoder</small></div><div class="specCard"><b>Скоростна кутия</b><div class="value">${escapeHtml(trans||"Не е върната")}</div><small class="pending">VIN decoder</small></div><div class="specCard"><b>Задвижване</b><div class="value">${escapeHtml(drive||"Не е върнато")}</div><small class="pending">VIN decoder</small></div><div class="specCard"><b>Купе</b><div class="value">${escapeHtml(body||"Не е върнато")}</div><small class="pending">VIN decoder</small></div></div><aside><b>Важно:</b> VIN декодирането е идентификационен слой. То не потвърждава автоматично сервизни количества, моменти на затягане, филтри или други критични спецификации.</aside>${knownEngine?`<button type="button" onclick="useVinVehicle()" style="margin-top:10px">Използвай този автомобил</button>`:""}`;
+  const confidence=exactnessLabel(v);
+  const sourceText=(v.sources||[v.source||"VIN decoder"]).join(" + ");
+  el("vinStatus").innerHTML=`<span class="${confidence.cls}">${confidence.label}</span> — ${escapeHtml(confidence.note)}`;
+  const agreement=(field)=>v.agreement?.[field] ? '<small class="verified">✓ съгласувано</small>' : '<small class="pending">непотвърдено от втори източник</small>';
+  el("vinResult").innerHTML=`
+  <div class="item"><b>${escapeHtml(v.make||"Неизвестна марка")} ${escapeHtml(v.model||"")}</b>
+  <span>${escapeHtml(v.year||"Година: не е потвърдена")}</span>
+  <span>${escapeHtml(v.engineModel||"Двигател: не е потвърден")}${v.engineCode?" • "+escapeHtml(v.engineCode):""}</span>
+  ${v.modelDetail?`<span>${escapeHtml(v.modelDetail)}</span>`:""}
+  <small class="pending">Източник: ${escapeHtml(sourceText)}</small></div>
+  <div class="specGrid">
+   <div class="specCard"><b>Работен обем</b><div class="value">${escapeHtml(v.disp?v.disp+" L":"Не е потвърден")}</div>${agreement("disp")}</div>
+   <div class="specCard"><b>Цилиндри</b><div class="value">${escapeHtml(v.cyl||"Не е потвърдено")}</div></div>
+   <div class="specCard"><b>Гориво</b><div class="value">${escapeHtml(v.fuel||"Не е потвърдено")}</div>${agreement("fuel")}</div>
+   <div class="specCard"><b>Скоростна кутия</b><div class="value">${escapeHtml(v.trans||"Не е потвърдена")}</div>${agreement("trans")}</div>
+   <div class="specCard"><b>Задвижване</b><div class="value">${escapeHtml(v.drive||"Не е потвърдено")}</div>${agreement("drive")}</div>
+   <div class="specCard"><b>Купе</b><div class="value">${escapeHtml(v.body||"Не е потвърдено")}</div></div>
+  </div>
+  <aside><b>Правило на AutoRepair:</b> неподтвърдено поле не се превръща в сервизна спецификация. Особено за европейски Ford не приемаме автоматично година/двигател от NHTSA като факт.</aside>
+  ${knownEngine?`<button type="button" onclick="useVinVehicle()" style="margin-top:10px">Използвай този автомобил</button>`:`<aside style="margin-top:10px"><b>Не е готов за сервизен каталог.</b> Кодът на двигателя не е потвърден в локалната техническа база.</aside>`}`;
+}
+async function fetchJson(url, options={}){
+  const res=await fetch(url,options);
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  return await res.json();
 }
 async function decodeVIN(){
   const vin=normalizeVin(el("vinInput")?.value);
   if(vin.length!==17){ el("vinStatus").textContent="VIN трябва да съдържа точно 17 символа (без I, O и Q)."; el("vinResult").innerHTML=""; return; }
-  el("vinInput").value=vin; el("vinStatus").textContent="Декодиране..."; el("vinResult").innerHTML="";
+  el("vinInput").value=vin; el("vinStatus").textContent="Проверка в европейски и общ VIN източник..."; el("vinResult").innerHTML="";
+  const results=[];
+  const fi=fordVinInfo(vin);
+  // Source 1: free European-oriented database. It is used as an additional source, not as a blind authority.
   try{
-    const url=`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${encodeURIComponent(vin)}?format=json`;
-    const res=await fetch(url,{headers:{"Accept":"application/json"}});
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json=await res.json();
-    const r=Array.isArray(json.Results)?json.Results[0]:null;
-    if(!r) throw new Error("VIN decoder не върна резултат.");
-    const err=vinField(r,"ErrorText");
-    if(err && !r.Make && !r.Model) throw new Error(err);
-    renderVinResult(r);
-  }catch(e){
-    el("vinStatus").textContent="Неуспешно декодиране: "+(e.message||"неизвестна грешка");
-    el("vinResult").innerHTML='<aside>Провери интернет връзката и VIN-а. За европейски автомобили е възможно decoder-ът да върне непълни данни.</aside>';
+    const j=await fetchJson(`https://db.vin/api/v1/vin/${encodeURIComponent(vin)}`);
+    if(j && (j.brand||j.make||j.model)) results.push(normalizeProviderResult(j,"DB.VIN (EU)",vin));
+  }catch(e){ /* optional source */ }
+  // Source 2: NHTSA vPIC. Useful as a secondary source; never trusted alone for European Ford year/build fields.
+  try{
+    const j=await fetchJson(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${encodeURIComponent(vin)}?format=json`,{headers:{"Accept":"application/json"}});
+    const r=Array.isArray(j.Results)?j.Results[0]:null;
+    if(r){
+      const err=vinField(r,"ErrorText");
+      if(!err || r.Make || r.Model) results.push(normalizeProviderResult(r,"NHTSA vPIC",vin));
+    }
+  }catch(e){ /* optional source */ }
+  const merged=mergeVinResults(results);
+  if(!merged){
+    el("vinStatus").textContent="VIN не беше идентифициран надеждно.";
+    el("vinResult").innerHTML=`<aside>Не получихме достатъчно данни от VIN източниците. ${fi.isFord?"Разпознат е европейски Ford, но това само по себе си не е достатъчно за сервизна идентификация.":"Опитай отново с проверен 17-символен VIN."}</aside>`;
+    return;
   }
+  renderVinResult(merged);
 }
 function useVinVehicle(){
   if(!vinProfile) return;
   const dbModel=DB[vinProfile.make]?.[vinProfile.model];
   const knownEngine=dbModel?.engines?.find(e=>vinProfile.engineCode && e[1]===vinProfile.engineCode);
-  if(!knownEngine){ el("vinStatus").textContent="VIN е запазен, но локалният каталог няма потвърден двигател за тази конфигурация."; return; }
-  vehicle={make:vinProfile.make,model:vinProfile.model,year:vinProfile.year||"—",engine:knownEngine,vin:vinProfile.vin,vinSource:"NHTSA vPIC"};
+  if(!knownEngine){ el("vinStatus").textContent="VIN е разпознат, но няма потвърден двигател в локалния технически каталог. Не го използваме за сервизни данни."; return; }
+  vehicle={make:vinProfile.make,model:vinProfile.model,year:vinProfile.year||"—",engine:knownEngine,vin:vinProfile.vin,vinSource:(vinProfile.sources||[]).join(" + ")};
   localStorage.setItem("vehicle",JSON.stringify(vehicle));
   updateHome(); show("home");
 }
