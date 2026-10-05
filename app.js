@@ -93,6 +93,52 @@ const DB = {
   }
 };
 
+
+const SPEC_TEMPLATES = {
+  overview: [
+    ["Марка", v => v.make, "Каталог"],
+    ["Модел", v => v.model, "Каталог"],
+    ["Година", v => v.year, "Каталог"],
+    ["Двигател", v => v.engine[0], "Каталог"],
+    ["Код на двигателя", v => v.engine[1], "Каталог"],
+    ["Гориво", v => v.engine[3], "Каталог"],
+    ["Мощност", () => "Изисква проверен източник", "Проверка"],
+    ["Работен обем", () => "Изисква проверен източник", "Проверка"]
+  ],
+  service: [
+    ["Моторно масло", () => "Изисква точна сервизна спецификация", "Проверка"],
+    ["Количество масло", () => "Изисква проверен източник", "Проверка"],
+    ["Маслен филтър", () => "Изисква каталог по VIN/двигател", "Проверка"],
+    ["Въздушен филтър", () => "Изисква каталог по VIN/двигател", "Проверка"],
+    ["Горивен филтър", () => "Изисква каталог по VIN/двигател", "Проверка"],
+    ["Филтър купе", () => "Изисква каталог по VIN/модел", "Проверка"],
+    ["Ремък / верига", () => "Изисква точна конфигурация на двигателя", "Проверка"],
+    ["Сервизен интервал", () => "Изисква проверен производителски източник", "Проверка"]
+  ],
+  fluids: [
+    ["Двигателно масло", () => "Спецификацията зависи от двигателя", "Проверка"],
+    ["Охладителна течност", () => "Спецификация и количество: проверен източник", "Проверка"],
+    ["Спирачна течност", () => "Типът зависи от производителя/системата", "Проверка"],
+    ["Масло скоростна кутия", () => "Зависи от кутията и конкретната версия", "Проверка"],
+    ["Масло диференциал", () => "Само при приложим тип задвижване", "Проверка"],
+    ["Хидравлична течност", () => "Само ако автомобилът използва отделна система", "Проверка"]
+  ],
+  brakes: [
+    ["Предни дискове", () => "Размерът зависи от изпълнението", "Проверка"],
+    ["Задни дискове", () => "Размерът зависи от изпълнението", "Проверка"],
+    ["Предни накладки", () => "Каталог по VIN/PR кодове/изпълнение", "Проверка"],
+    ["Задни накладки", () => "Каталог по VIN/PR кодове/изпълнение", "Проверка"],
+    ["Спирачна течност", () => "Тип и процедура: проверен източник", "Проверка"]
+  ],
+  electrical: [
+    ["Акумулатор", () => "Размер/капацитет зависи от конфигурацията", "Проверка"],
+    ["Стартер", () => "Проверка по двигател/VIN", "Проверка"],
+    ["Алтернатор", () => "Проверка по двигател/VIN", "Проверка"],
+    ["Предпазители", () => "Използвай схема за конкретната година/оборудване", "Проверка"],
+    ["Диагностичен интерфейс", () => "OBD-II при съвместими автомобили", "Общо"]
+  ]
+};
+
 const OBD = [
  ["P0301","Пропуск в запалването/горенето — цилиндър 1",["Запалителна система","Горивна система","Въздушен/вакуумен проблем","Механичен проблем"]],
  ["P0171","Сместа е прекалено бедна — Bank 1",["Вакуумен теч","Недостатъчно гориво","Измерване на въздуха"]],
@@ -108,7 +154,7 @@ function show(id){
   const target = el(id);
   if(!target) return;
   target.classList.add("active");
-  if(id === "specs") renderSpecs();
+  if(id === "specs") renderSpecs(document.querySelector("[data-spec-tab].active")?.dataset.specTab || "overview");
   if(id === "diagnostics") renderOBD();
   if(id === "repairs") renderRepairs();
   window.scrollTo(0,0);
@@ -124,6 +170,7 @@ function init(){
   el("globalSearchInput").addEventListener("input", runGlobalSearch);
   el("addRepairBtn").addEventListener("click", addRepair);
   document.querySelectorAll("[data-show]").forEach(btn => btn.addEventListener("click", () => show(btn.dataset.show)));
+  document.querySelectorAll("[data-spec-tab]").forEach(btn => btn.addEventListener("click", () => renderSpecs(btn.dataset.specTab)));
   renderModels();
   updateHome();
   renderOBD();
@@ -159,11 +206,23 @@ function updateHome(){
   el("selectedCar").textContent = vehicle ? `${vehicle.make} ${vehicle.model} • ${vehicle.year}` : "Не е избран";
   el("selectedEngine").textContent = vehicle ? `${vehicle.engine[0]} • ${vehicle.engine[1]} • ${vehicle.engine[3]}` : "Избери автомобил, за да започнеш.";
 }
-function renderSpecs(){
-  if(!vehicle){ el("vehicleSummary").innerHTML='<div class="item muted">Първо избери автомобил.</div>'; el("specList").innerHTML=""; return; }
-  el("vehicleSummary").innerHTML=`<div class="item"><b>${escapeHtml(vehicle.make)} ${escapeHtml(vehicle.model)}</b><span class="muted">${escapeHtml(vehicle.year)} • ${escapeHtml(vehicle.engine[0])} • ${escapeHtml(vehicle.engine[1])}</span></div>`;
-  el("specList").innerHTML=["Моторно масло","Количество масло","Моменти на затягане","Сервизни интервали"].map(x=>`<div class="item"><b>${x}</b><span class="muted">Изисква проверен източник</span></div>`).join("");
+function renderSpecs(tab="overview"){
+  const tabs = document.querySelectorAll("[data-spec-tab]");
+  tabs.forEach(b=>b.classList.toggle("active", b.dataset.specTab===tab));
+  if(!vehicle){
+    el("vehicleSummary").innerHTML='<div class="item muted">Първо избери автомобил.</div>';
+    el("specList").innerHTML="";
+    return;
+  }
+  el("vehicleSummary").innerHTML=`<div class="item"><b>${escapeHtml(vehicle.make)} ${escapeHtml(vehicle.model)}</b><span class="muted">${escapeHtml(vehicle.year)} • ${escapeHtml(vehicle.engine[0])} • ${escapeHtml(vehicle.engine[1])} • ${escapeHtml(vehicle.engine[3])}</span></div>`;
+  const rows = SPEC_TEMPLATES[tab] || SPEC_TEMPLATES.overview;
+  el("specList").innerHTML=`<div class="specGrid">${rows.map(([label,get,status])=>{
+    const value = get(vehicle);
+    const cls = status === "Каталог" || status === "Общо" ? "verified" : "pending";
+    return `<div class="specCard"><b>${escapeHtml(label)}</b><div class="value">${escapeHtml(value)}</div><small class="${cls}">${escapeHtml(status)}</small></div>`;
+  }).join("")}</div>`;
 }
+
 function renderOBD(){
   const q = el("obdSearch").value.trim().toUpperCase();
   const list = OBD.filter(x => x[0].includes(q) || x[1].toUpperCase().includes(q));
@@ -194,6 +253,6 @@ function runGlobalSearch(){
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
 
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=5").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=6").catch(()=>{}));
 }
 document.addEventListener("DOMContentLoaded", init);
