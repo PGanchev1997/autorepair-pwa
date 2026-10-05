@@ -201,7 +201,7 @@ let vehicle = safeJSON("vehicle", null);
 let repairs = safeJSON("repairs", []);
 if(!Array.isArray(repairs)) repairs = [];
 
-function show(id){
+window.show = function show(id){
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   const target = el(id);
   if(!target) return;
@@ -315,6 +315,6 @@ function runGlobalSearch(){
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
 
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=10").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=11").catch(()=>{}));
 }
 document.addEventListener("DOMContentLoaded", init);

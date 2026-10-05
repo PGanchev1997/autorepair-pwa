@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b84ff">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=11">
 <title>AutoRepair</title>
 </head>
 <body>
 <header><b>AutoRepair</b><small>Технически помощник</small></header>
 <main>
 <section id="home" class="screen active">
-<div class="hero"><small>МОЯТ АВТОМОБИЛ</small><h1 id="selectedCar">Не е избран</h1><p id="selectedEngine">Избери автомобил, за да започнеш.</p><button data-show="cars">Избери автомобил</button></div>
+<div class="hero"><small>МОЯТ АВТОМОБИЛ</small><h1 id="selectedCar">Не е избран</h1><p id="selectedEngine">Избери автомобил, за да започнеш.</p><button type="button" onclick="show('cars')">Избери автомобил</button></div>
 <div class="grid">
-<button data-show="specs">🔧<br>Технически данни</button><button data-show="diagnostics">🔍<br>OBD диагностика</button><button data-show="repairs">🛠️<br>Ремонти</button><button data-show="search">⌕<br>Търсене</button>
+<button type="button" onclick="show('specs')">🔧<br>Технически данни</button><button type="button" onclick="show('diagnostics')">🔍<br>OBD диагностика</button><button type="button" onclick="show('repairs')">🛠️<br>Ремонти</button><button type="button" onclick="show('search')">⌕<br>Търсене</button>
 </div></section>
 <section id="cars" class="screen"><h2>Автомобил</h2><p class="muted">Разширен каталог • 15 марки</p>
 <label>Марка<select id="makeSelect"></select></label>
@@ -37,10 +37,10 @@
 <aside>Критични сервизни стойности като количества, моменти, допуски и интервали ще се попълват само от проверени/лицензирани източници.</aside>
 </section>
 <section id="diagnostics" class="screen"><h2>OBD диагностика</h2><input id="obdSearch" placeholder="Код, напр. P0301"><div id="obdList"></div></section>
-<section id="obdDetail" class="screen"><button class="back" data-show="diagnostics">‹ Назад</button><div id="obdDetailBody"></div></section>
+<section id="obdDetail" class="screen"><button type="button" class="back" onclick="show('diagnostics')">‹ Назад</button><div id="obdDetailBody"></div></section>
 <section id="repairs" class="screen"><h2>Ремонтна история</h2><div id="repairList"></div><button id="addRepairBtn">＋ Добави ремонт</button></section>
 <section id="search" class="screen"><h2>Търсене</h2><input id="globalSearchInput" placeholder="Автомобил, код или система"><div id="searchResults"></div></section>
 </main>
-<nav><button data-show="home">⌂<small>Начало</small></button><button data-show="cars">🚗<small>Автомобил</small></button><button data-show="specs">🔧<small>Техника</small></button><button data-show="diagnostics">🔍<small>OBD</small></button></nav>
-<script src="app.js?v=10"></script>
+<nav><button type="button" onclick="show('home')">⌂<small>Начало</small></button><button type="button" onclick="show('cars')">🚗<small>Автомобил</small></button><button type="button" onclick="show('specs')">🔧<small>Техника</small></button><button type="button" onclick="show('diagnostics')">🔍<small>OBD</small></button></nav>
+<script src="app.js?v=11"></script>
 </body></html>
