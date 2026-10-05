@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b84ff">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 <title>AutoRepair</title>
 </head>
 <body>
@@ -26,12 +26,12 @@
 <section id="specs" class="screen">
 <h2>Технически данни</h2>
 <div id="vehicleSummary"></div>
-<div id="specTabs" class="specTabs">
-<button data-spec-tab="overview">Общо</button>
-<button data-spec-tab="service">Сервиз</button>
-<button data-spec-tab="fluids">Течности</button>
-<button data-spec-tab="brakes">Спирачки</button>
-<button data-spec-tab="electrical">Електрика</button>
+<div id="specTabs" class="specTabs" aria-label="Раздели технически данни">
+<div class="specTab active" role="button" tabindex="0" data-spec-tab="overview"><span>Общо</span></div>
+<div class="specTab" role="button" tabindex="0" data-spec-tab="service"><span>Сервиз</span></div>
+<div class="specTab" role="button" tabindex="0" data-spec-tab="fluids"><span>Течности</span></div>
+<div class="specTab" role="button" tabindex="0" data-spec-tab="brakes"><span>Спирачки</span></div>
+<div class="specTab" role="button" tabindex="0" data-spec-tab="electrical"><span>Електрика</span></div>
 </div>
 <div id="specList"></div>
 <aside>Критични сервизни стойности като количества, моменти, допуски и интервали ще се попълват само от проверени/лицензирани източници.</aside>
@@ -42,5 +42,5 @@
 <section id="search" class="screen"><h2>Търсене</h2><input id="globalSearchInput" placeholder="Автомобил, код или система"><div id="searchResults"></div></section>
 </main>
 <nav><button data-show="home">⌂<small>Начало</small></button><button data-show="cars">🚗<small>Автомобил</small></button><button data-show="specs">🔧<small>Техника</small></button><button data-show="diagnostics">🔍<small>OBD</small></button></nav>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body></html>

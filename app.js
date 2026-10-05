@@ -170,7 +170,12 @@ function init(){
   el("globalSearchInput").addEventListener("input", runGlobalSearch);
   el("addRepairBtn").addEventListener("click", addRepair);
   document.querySelectorAll("[data-show]").forEach(btn => btn.addEventListener("click", () => show(btn.dataset.show)));
-  document.querySelectorAll("[data-spec-tab]").forEach(btn => btn.addEventListener("click", () => renderSpecs(btn.dataset.specTab)));
+  document.querySelectorAll("[data-spec-tab]").forEach(btn => {
+    btn.addEventListener("click", () => renderSpecs(btn.dataset.specTab));
+    btn.addEventListener("keydown", e => {
+      if(e.key === "Enter" || e.key === " ") { e.preventDefault(); renderSpecs(btn.dataset.specTab); }
+    });
+  });
   renderModels();
   updateHome();
   renderOBD();
@@ -253,6 +258,6 @@ function runGlobalSearch(){
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
 
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=7").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=8").catch(()=>{}));
 }
 document.addEventListener("DOMContentLoaded", init);
