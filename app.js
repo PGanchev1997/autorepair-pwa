@@ -143,24 +143,24 @@ const SPEC_TEMPLATES = {
     ["Двигател", v => v.engine[0], "Каталог"],
     ["Код на двигателя", v => v.engine[1], "Каталог"],
     ["Гориво", v => v.engine[3], "Каталог"],
-    ["Работен обем", v => profileFor(v)?.displacement || "Изисква проверен източник", profileFor(v) ? "Проверено" : "Проверка"],
-    ["Мощност", v => profileFor(v)?.power || "Изисква проверен източник", profileFor(v) ? "Проверено" : "Проверка"],
-    ["Въртящ момент", v => profileFor(v)?.torque || "Изисква проверен източник", profileFor(v) ? "Проверено с уточнение" : "Проверка"],
-    ["Впръскване", v => profileFor(v)?.injection || "Изисква проверен източник", profileFor(v) ? "Проверено" : "Проверка"]
+    ["Работен обем", v => profileFor(v)?.displacement || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Мощност", v => profileFor(v)?.power || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Въртящ момент", v => profileFor(v)?.torque || "Изисква проверен източник", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"],
+    ["Впръскване", v => profileFor(v)?.injection || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"]
   ],
   service: [
-    ["Моторно масло", v => profileFor(v)?.oilViscosity || "Изисква точна сервизна спецификация", profileFor(v) ? "Проверено" : "Проверка"],
-    ["Спецификация на маслото", v => profileFor(v)?.oilSpec || "Изисква проверен източник", profileFor(v) ? "Проверено" : "Проверка"],
-    ["Количество масло", v => profileFor(v)?.oilCapacity || "Изисква проверен източник", profileFor(v) ? "Проверено" : "Проверка"],
+    ["Моторно масло", v => profileFor(v)?.oilViscosity || "Изисква точна сервизна спецификация", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Спецификация на маслото", v => profileFor(v)?.oilSpec || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Количество масло", v => profileFor(v)?.oilCapacity || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
     ["Маслен филтър", () => "Каталог по VIN/двигател", "Проверка"],
     ["Въздушен филтър", () => "Каталог по VIN/двигател", "Проверка"],
     ["Горивен филтър", () => "Каталог по VIN/двигател", "Проверка"],
     ["Филтър купе", () => "Каталог по VIN/модел", "Проверка"],
-    ["Сервизен интервал", v => profileFor(v)?.serviceInterval || "Изисква проверен производителски източник", profileFor(v) ? "Проверено с уточнение" : "Проверка"]
+    ["Сервизен интервал", v => profileFor(v)?.serviceInterval || "Изисква проверен производителски източник", v => profileFor(v) ? "Проверено с уточнение" : "Проверка"]
   ],
   fluids: [
-    ["Двигателно масло", v => profileFor(v)?.oilSpec || "Спецификацията зависи от двигателя", profileFor(v) ? "Проверено" : "Проверка"],
-    ["Количество моторно масло", v => profileFor(v)?.oilCapacity || "Изисква проверен източник", profileFor(v) ? "Проверено" : "Проверка"],
+    ["Двигателно масло", v => profileFor(v)?.oilSpec || "Спецификацията зависи от двигателя", v => profileFor(v) ? "Проверено" : "Проверка"],
+    ["Количество моторно масло", v => profileFor(v)?.oilCapacity || "Изисква проверен източник", v => profileFor(v) ? "Проверено" : "Проверка"],
     ["Охладителна течност", () => "Провери спецификацията по VIN/код на двигателя", "Проверка"],
     ["Спирачна течност", () => "Провери спецификацията по VIN/оборудване", "Проверка"],
     ["Масло скоростна кутия", () => "Зависи от конкретната скоростна кутия", "Проверка"]
@@ -280,8 +280,9 @@ function renderSpecs(tab="overview"){
   const rows = SPEC_TEMPLATES[tab] || SPEC_TEMPLATES.overview;
   el("specList").innerHTML=`<div class="specGrid">${rows.map(([label,get,status])=>{
     const value = get(vehicle);
-    const cls = status === "Каталог" || status === "Общо" ? "verified" : "pending";
-    return `<div class="specCard"><b>${escapeHtml(label)}</b><div class="value">${escapeHtml(value)}</div><small class="${cls}">${escapeHtml(status)}</small></div>`;
+    const statusValue = typeof status === "function" ? status(vehicle) : status;
+    const cls = statusValue === "Каталог" || statusValue === "Общо" || statusValue === "Проверено" || statusValue === "Проверено с уточнение" ? "verified" : "pending";
+    return `<div class="specCard"><b>${escapeHtml(label)}</b><div class="value">${escapeHtml(value)}</div><small class="${cls}">${escapeHtml(statusValue)}</small></div>`;
   }).join("")}</div>`;
 }
 
@@ -315,6 +316,6 @@ function runGlobalSearch(){
 function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
 
 if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=11").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=13").catch(()=>{}));
 }
 document.addEventListener("DOMContentLoaded", init);
